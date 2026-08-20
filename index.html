@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleurir Sessions</title>
+<style>
+  :root{
+    --ink:#1f2421; --muted:#6b7570; --line:#e3e6e4; --bg:#fbfbfa;
+    --panel:#ffffff; --accent:#0f6e56; --accent-soft:#e1f5ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:28px 0 22px}
+  h1{font-size:1.5rem;font-weight:600;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.92rem;margin-top:4px}
+
+  .controls{background:var(--panel);border-bottom:1px solid var(--line);
+            padding:16px 0;position:sticky;top:0;z-index:20}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input[type=search]{flex:1;min-width:220px;padding:10px 14px;font-size:.95rem;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+  input[type=search]:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .chip{padding:7px 13px;border:1px solid var(--line);background:var(--panel);
+    border-radius:20px;font-size:.85rem;cursor:pointer;white-space:nowrap;
+    color:var(--muted);transition:.12s}
+  .chip:hover{border-color:var(--accent)}
+  .chip[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .group{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:11px}
+  .glabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);margin-right:3px;font-weight:600}
+
+  .count{padding:14px 0 6px;color:var(--muted);font-size:.86rem}
+
+  ul.sessions{list-style:none}
+  li.session{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:15px 17px;margin-bottom:9px;display:grid;
+    grid-template-columns:104px 1fr auto;gap:16px;align-items:baseline}
+  .date{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .date .yr{display:block;font-size:.75rem;opacity:.7}
+  .topic{font-weight:500}
+  .meta{color:var(--muted);font-size:.85rem;margin-top:3px}
+  .blurb{font-size:.88rem;color:#4a534d;margin-top:7px}
+  .tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:.72rem;
+    background:var(--accent-soft);color:#0b4a3a;white-space:nowrap;font-weight:500}
+  .type{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  a.res{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;
+    background:var(--accent);color:#fff;text-decoration:none;border-radius:7px;
+    font-size:.83rem;white-space:nowrap;font-weight:500}
+  a.res:hover{filter:brightness(1.08)}
+  .nores{font-size:.8rem;color:#b6bdb9;white-space:nowrap}
+
+  .empty,.loading{padding:56px 20px;text-align:center;color:var(--muted)}
+  footer{padding:26px 0 40px;color:var(--muted);font-size:.8rem}
+  .err{background:#fdeceb;border:1px solid #f3c5c1;color:#8c2f26;
+       padding:14px 16px;border-radius:8px;margin:20px 0;font-size:.9rem}
+
+  @media(max-width:640px){
+    li.session{grid-template-columns:1fr;gap:8px}
+    .date{font-size:.8rem}
+    .date .yr{display:inline;margin-left:5px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Fleurir Sessions</h1>
+    <p class="sub">Every Cafe, Bistro and Patisserie session, with materials where we have them.</p>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <div class="row">
+      <input type="search" id="q" placeholder="Search topic or facilitator…" autocomplete="off">
+      <button class="chip" id="onlyRes" aria-pressed="false">Only with resources</button>
+    </div>
+    <div class="group" id="themes"></div>
+    <div class="group" id="years"></div>
+    <div class="group" id="types"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <p class="count" id="count"></p>
+  <div id="err"></div>
+  <ul class="sessions" id="list"><li class="loading">Loading sessions…</li></ul>
+</main>
+
+<footer class="wrap"><span id="updated"></span></footer>
+
+<script>
+// ---------------------------------------------------------------------
+// Paste the published CSV link here.
+// In the spreadsheet: File > Share > Publish to web > the Sessions sheet
+// > Comma-separated values (.csv), then copy the link it gives you.
+// ---------------------------------------------------------------------
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mYYJ0kcNA72FzNUKQoeaeU2UOafE7LGzXF2IC-f3kFtglYjyeMHY_JQq62DIZqygPe/pub?gid=1748292580&single=true&output=csv';
+
+// Sessions with this theme are not really sessions, so they are hidden.
+const HIDE_THEME = 'No session (break)';
+
+// ---------------------------------------------------------------------
+
+/* A real CSV parser rather than splitting on commas. Session topics are
+   full of commas, quotes and the occasional line break, all of which
+   break the naive version. */
+function parseCSV(text){
+  const rows=[]; let row=[], field='', inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQuotes=false; }
+      else field+=c;
+    } else if(c==='"'){ inQuotes=true; }
+    else if(c===','){ row.push(field); field=''; }
+    else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+    else if(c!=='\r'){ field+=c; }
+  }
+  if(field.length||row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.some(v=>v.trim()!==''));
+}
+
+/* Columns are found by heading, so reordering them in the sheet is fine. */
+function toObjects(rows){
+  const head=rows[0].map(h=>h.trim().toLowerCase());
+  const find=(...names)=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
+  const ix={ date:find('date'), type:find('type','café / bistro','cafe / bistro'),
+             who:find('facilitator','presenter'), topic:find('topic'),
+             theme:find('theme'), blurb:find('blurb'),
+             res:find('resources','resource folder'), files:find('files','file count') };
+  return rows.slice(1).map(r=>({
+    date:  (r[ix.date]||'').trim(),
+    type:  (r[ix.type]||'').trim(),
+    who:   (r[ix.who]||'').trim(),
+    topic: (r[ix.topic]||'').trim(),
+    theme: (r[ix.theme]||'').trim(),
+    blurb: (r[ix.blurb]||'').trim(),
+    res:   (r[ix.res]||'').trim(),
+    files: (r[ix.files]||'').trim()
+  })).filter(s=>s.date);
+}
+
+let ALL=[], state={q:'',themes:new Set(),years:new Set(),types:new Set(),onlyRes:false};
+
+const el = id => document.getElementById(id);
+const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const yearOf = d => (d||'').slice(0,4);
+
+function makeChips(container, values, key){
+  container.innerHTML='';
+  const label=document.createElement('span');
+  label.className='glabel';
+  label.textContent={themes:'Theme',years:'Year',types:'Session'}[key];
+  container.appendChild(label);
+  values.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.textContent=v; b.setAttribute('aria-pressed','false');
+    b.onclick=()=>{
+      const set=state[key];
+      set.has(v)?set.delete(v):set.add(v);
+      b.setAttribute('aria-pressed', set.has(v));
+      render();
+    };
+    container.appendChild(b);
+  });
+}
+
+function matches(s){
+  if(state.q){
+    const q=state.q.toLowerCase();
+    if(!(s.topic.toLowerCase().includes(q) || s.who.toLowerCase().includes(q)
+       || s.theme.toLowerCase().includes(q))) return false;
+  }
+  if(state.themes.size && !state.themes.has(s.theme)) return false;
+  if(state.years.size  && !state.years.has(yearOf(s.date))) return false;
+  if(state.types.size  && !state.types.has(s.type)) return false;
+  if(state.onlyRes && !s.res) return false;
+  return true;
+}
+
+function render(){
+  const shown=ALL.filter(matches);
+  const withRes=shown.filter(s=>s.res).length;
+  el('count').textContent =
+    `${shown.length} session${shown.length===1?'':'s'}` +
+    (shown.length!==ALL.length ? ` of ${ALL.length}` : '') +
+    ` · ${withRes} with materials`;
+
+  if(!shown.length){
+    el('list').innerHTML='<li class="empty">No sessions match those filters.</li>';
+    return;
+  }
+  el('list').innerHTML = shown.map(s=>{
+    const [y,m,d]=s.date.split('-');
+    const nice=`${d}/${m}`;
+    const res = s.res
+      ? `<a class="res" href="${esc(s.res)}" target="_blank" rel="noopener">Materials${s.files?` (${esc(s.files)})`:''}</a>`
+      : `<span class="nores">—</span>`;
+    return `<li class="session">
+      <span class="date">${nice}<span class="yr">${y}</span></span>
+      <div>
+        <div class="topic">${esc(s.topic)||'<em>Untitled</em>'}</div>
+        <div class="meta">
+          <span class="type">${esc(s.type)}</span>
+          ${s.who?` · ${esc(s.who)}`:''}
+          ${s.theme?` · <span class="tag">${esc(s.theme)}</span>`:''}
+        </div>
+        ${s.blurb?`<div class="blurb">${esc(s.blurb)}</div>`:''}
+      </div>
+      ${res}
+    </li>`;
+  }).join('');
+}
+
+function start(sessions){
+  ALL = sessions
+    .filter(s=>s.theme!==HIDE_THEME)
+    .sort((a,b)=> b.date.localeCompare(a.date));   // newest first
+
+  makeChips(el('themes'), [...new Set(ALL.map(s=>s.theme).filter(Boolean))].sort(), 'themes');
+  makeChips(el('years'),  [...new Set(ALL.map(s=>yearOf(s.date)))].sort().reverse(), 'years');
+  makeChips(el('types'),  [...new Set(ALL.map(s=>s.type).filter(Boolean))].sort(), 'types');
+
+  el('q').oninput = e => { state.q=e.target.value; render(); };
+  el('onlyRes').onclick = e => {
+    state.onlyRes=!state.onlyRes;
+    e.target.setAttribute('aria-pressed', state.onlyRes);
+    render();
+  };
+  el('updated').textContent = 'Updated ' + new Date().toLocaleDateString('en-GB',
+    {day:'numeric',month:'long',year:'numeric'});
+  render();
+}
+
+fetch(CSV_URL)
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+  .then(t=>start(toObjects(parseCSV(t))))
+  .catch(e=>{
+    el('list').innerHTML='';
+    el('err').innerHTML=`<div class="err"><strong>Could not load the sessions.</strong><br>
+      Check the published CSV link near the top of this file is correct and the
+      sheet is still published.<br><small>${esc(e.message)}</small></div>`;
+  });
+</script>
+</body>
+</html>
