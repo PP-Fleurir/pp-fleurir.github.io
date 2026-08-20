@@ -1,98 +1,121 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fleurir Sessions</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleurir Session Resources</title>
 <style>
-  :root{
-    --ink:#1f2421; --muted:#6b7570; --line:#e3e6e4; --bg:#fbfbfa;
-    --panel:#ffffff; --accent:#0f6e56; --accent-soft:#e1f5ee;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-       background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8f9fa;color:#2c3e50;font-size:14px;}
 
-  header{background:var(--panel);border-bottom:1px solid var(--line);padding:28px 0 22px}
-  h1{font-size:1.5rem;font-weight:600;letter-spacing:-.01em}
-  .sub{color:var(--muted);font-size:.92rem;margin-top:4px}
+header{background:white;border-bottom:1px solid #e0e0e0;padding:20px 32px 16px;
+       position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+header h1{font-size:1.4rem;font-weight:700;color:#1a1a2e;margin-bottom:3px;}
+header p{font-size:0.82rem;color:#888;}
 
-  .controls{background:var(--panel);border-bottom:1px solid var(--line);
-            padding:16px 0;position:sticky;top:0;z-index:20}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  input[type=search]{flex:1;min-width:220px;padding:10px 14px;font-size:.95rem;
-    border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-  input[type=search]:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
-  .chip{padding:7px 13px;border:1px solid var(--line);background:var(--panel);
-    border-radius:20px;font-size:.85rem;cursor:pointer;white-space:nowrap;
-    color:var(--muted);transition:.12s}
-  .chip:hover{border-color:var(--accent)}
-  .chip[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .group{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:11px}
-  .glabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
-    color:var(--muted);margin-right:3px;font-weight:600}
+.controls{background:white;border-bottom:1px solid #e8e8e8;padding:14px 32px;
+          display:flex;flex-direction:column;gap:12px;}
+.row1{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+#search{flex:1;min-width:200px;padding:8px 14px;border:1.5px solid #ddd;
+        border-radius:7px;font-size:0.9rem;outline:none;font-family:inherit;}
+#search:focus{border-color:#5b8dee;}
+.toggles{display:flex;gap:8px;flex-wrap:wrap;}
+.toggle{padding:6px 14px;border:1.5px solid #ddd;border-radius:20px;background:white;
+        font-size:0.8rem;cursor:pointer;white-space:nowrap;transition:all 0.15s;
+        font-family:inherit;color:#2c3e50;}
+.toggle:hover{border-color:#bbb;}
+.toggle.active{background:#2c3e50;color:white;border-color:#2c3e50;}
 
-  .count{padding:14px 0 6px;color:var(--muted);font-size:.86rem}
+.pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.pills-label{font-size:0.75rem;font-weight:600;color:#aaa;text-transform:uppercase;
+             letter-spacing:0.5px;margin-right:2px;}
+.pill{padding:5px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;
+      cursor:pointer;transition:all 0.15s;user-select:none;white-space:nowrap;
+      border:1.5px solid transparent;}
+.pill:hover{opacity:0.8;}
+.year-pill{padding:5px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;
+           cursor:pointer;transition:all 0.15s;user-select:none;white-space:nowrap;
+           background:#f4f4f4;color:#555;border:1.5px solid #ddd;}
+.year-pill:hover{background:#e8e8e8;}
+.year-pill.active{background:#2c3e50;color:white;border-color:#2c3e50;}
 
-  ul.sessions{list-style:none}
-  li.session{background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:15px 17px;margin-bottom:9px;display:grid;
-    grid-template-columns:104px 1fr auto;gap:16px;align-items:baseline}
-  .date{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .date .yr{display:block;font-size:.75rem;opacity:.7}
-  .topic{font-weight:500}
-  .meta{color:var(--muted);font-size:.85rem;margin-top:3px}
-  .blurb{font-size:.88rem;color:#4a534d;margin-top:7px}
-  .tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:.72rem;
-    background:var(--accent-soft);color:#0b4a3a;white-space:nowrap;font-weight:500}
-  .type{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  a.res{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;
-    background:var(--accent);color:#fff;text-decoration:none;border-radius:7px;
-    font-size:.83rem;white-space:nowrap;font-weight:500}
-  a.res:hover{filter:brightness(1.08)}
-  .nores{font-size:.8rem;color:#b6bdb9;white-space:nowrap}
+.results-bar{padding:10px 32px;font-size:0.8rem;color:#999;
+             border-bottom:1px solid #eee;background:white;}
 
-  .empty,.loading{padding:56px 20px;text-align:center;color:var(--muted)}
-  footer{padding:26px 0 40px;color:var(--muted);font-size:.8rem}
-  .err{background:#fdeceb;border:1px solid #f3c5c1;color:#8c2f26;
-       padding:14px 16px;border-radius:8px;margin:20px 0;font-size:.9rem}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:0.78rem;font-weight:600;color:#888;
+   text-transform:uppercase;letter-spacing:0.4px;border-bottom:2px solid #e8e8e8;
+   white-space:nowrap;background:white;cursor:pointer;user-select:none;}
+th:hover{color:#555;}
+th .arr{opacity:0.25;margin-left:3px;font-size:0.7rem;}
+th.sorted{color:#2c3e50;}
+th.sorted .arr{opacity:1;}
+td{padding:10px 16px;border-bottom:1px solid #f0f0f0;vertical-align:middle;line-height:1.4;}
+tr:hover td{background:#fafbfc;}
 
-  @media(max-width:640px){
-    li.session{grid-template-columns:1fr;gap:8px}
-    .date{font-size:.8rem}
-    .date .yr{display:inline;margin-left:5px}
-  }
+.col-date{width:100px;color:#666;font-size:0.82rem;white-space:nowrap;}
+.col-venue{width:90px;font-size:0.78rem;color:#888;white-space:nowrap;}
+.col-presenter{width:160px;color:#444;}
+.col-theme{width:200px;}
+.col-resources{width:110px;text-align:center;}
+
+.theme-tag{display:inline-block;padding:3px 9px;border-radius:10px;font-size:0.75rem;
+           font-weight:600;white-space:nowrap;}
+.res-link{text-decoration:none;font-size:0.8rem;font-weight:600;color:#1A5276;
+          white-space:nowrap;}
+a.res-link:hover{text-decoration:underline;}
+.no-res{color:#ccc;font-size:0.78rem;}
+
+.no-results,.loading{padding:60px;text-align:center;color:#bbb;background:white;}
+.err{margin:24px 32px;background:#fdeceb;border:1px solid #f3c5c1;color:#8c2f26;
+     padding:14px 16px;border-radius:8px;font-size:0.88rem;}
+footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
+
+@media(max-width:700px){
+  .controls,.results-bar,footer{padding-left:16px;padding-right:16px;}
+  header{padding:14px 16px;}
+  th,td{padding:8px 10px;}
+  .col-presenter,.col-venue{display:none;}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
-    <h1>Fleurir Sessions</h1>
-    <p class="sub">Every Cafe, Bistro and Patisserie session, with materials where we have them.</p>
-  </div>
+  <h1>🌸 Fleurir Session Resources</h1>
+  <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or presenter</p>
 </header>
 
 <div class="controls">
-  <div class="wrap">
-    <div class="row">
-      <input type="search" id="q" placeholder="Search topic or facilitator…" autocomplete="off">
-      <button class="chip" id="onlyRes" aria-pressed="false">Only with resources</button>
+  <div class="row1">
+    <input type="text" id="search" placeholder="Search topic or presenter…">
+    <div class="toggles" id="venue-toggles"></div>
+    <div class="toggles">
+      <button class="toggle" id="btn-resources">📁 Any resources</button>
     </div>
-    <div class="group" id="themes"></div>
-    <div class="group" id="years"></div>
-    <div class="group" id="types"></div>
   </div>
+  <div class="pills" id="year-pills"></div>
+  <div class="pills" id="pills"></div>
 </div>
 
-<main class="wrap">
-  <p class="count" id="count"></p>
-  <div id="err"></div>
-  <ul class="sessions" id="list"><li class="loading">Loading sessions…</li></ul>
-</main>
-
-<footer class="wrap"><span id="updated"></span></footer>
+<div class="results-bar" id="results-bar"></div>
+<div id="err"></div>
+<table id="table" style="display:none">
+  <thead>
+    <tr>
+      <th class="col-date"      data-key="date">Date<span class="arr">↕</span></th>
+      <th class="col-venue"     data-key="type">Session<span class="arr">↕</span></th>
+      <th class="col-presenter" data-key="who">Presenter<span class="arr">↕</span></th>
+      <th class="col-topic"     data-key="topic">Topic<span class="arr">↕</span></th>
+      <th class="col-theme"     data-key="theme">Theme<span class="arr">↕</span></th>
+      <th class="col-resources" data-key="res">Resources<span class="arr">↕</span></th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+<div id="no-results" class="no-results" style="display:none">No sessions match your filters.</div>
+<div id="loading" class="loading">Loading sessions…</div>
+<footer id="footer"></footer>
 
 <script>
 // ---------------------------------------------------------------------
@@ -102,8 +125,40 @@
 // ---------------------------------------------------------------------
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mYYJ0kcNA72FzNUKQoeaeU2UOafE7LGzXF2IC-f3kFtglYjyeMHY_JQq62DIZqygPe/pub?gid=1748292580&single=true&output=csv';
 
-// Sessions with this theme are not really sessions, so they are hidden.
+// Sessions with this theme are holiday markers, not sessions, so they are hidden.
 const HIDE_THEME = 'No session (break)';
+
+// Theme colours: pale background, dark text from the same family.
+// Themes carried over from the previous site keep their original colours so
+// the page still looks familiar. Anything not listed falls back to a colour
+// picked from its name, so a new theme in the sheet always renders sensibly
+// rather than appearing blank.
+const THEME_COLOURS = {
+  'Coaching Practice':        ['#D6EAF8','#1A5276'],
+  'Research & Academia':      ['#D5F5E3','#156635'],
+  'Wellbeing & Self-Care':    ['#FDEBD0','#784212'],
+  'Mind & Body':              ['#E8DAEF','#6C3483'],
+  'Mental Health':            ['#FADBD8','#922B21'],
+  'Positive Psychology':      ['#FEF9E7','#7D6608'],
+  'Work & Leadership':        ['#D1F2EB','#0E6655'],
+  'Business & Career':        ['#EBF5FB','#21618C'],
+  'Creativity & Expression':  ['#F9EBEA','#A93226'],
+  'Community & Connection':   ['#F2F3F4','#424949'],
+  'Technology & AI':          ['#E8EAF6','#283593'],
+  'Society & Culture':        ['#F5E0F0','#7B2D6B'],
+  'Loss & Life Transitions':  ['#E4E9EC','#37505C'],
+  'Conferences & Events':     ['#EDF3D8','#5B6B21'],
+  'Other / Unclassified':     ['#F7F7F5','#63635B']
+};
+const FALLBACK_COLOURS = [
+  ['#D6EAF8','#1A5276'],['#D5F5E3','#1E8449'],['#FDEBD0','#784212'],
+  ['#E8DAEF','#6C3483'],['#FADBD8','#922B21'],['#D1F2EB','#0E6655']
+];
+function themeColour(t){
+  if(THEME_COLOURS[t]) return THEME_COLOURS[t];
+  let h=0; for(let i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))>>>0;
+  return FALLBACK_COLOURS[h%FALLBACK_COLOURS.length];
+}
 
 // ---------------------------------------------------------------------
 
@@ -132,119 +187,183 @@ function toObjects(rows){
   const find=(...names)=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
   const ix={ date:find('date'), type:find('type','café / bistro','cafe / bistro'),
              who:find('facilitator','presenter'), topic:find('topic'),
-             theme:find('theme'), blurb:find('blurb'),
-             res:find('resources','resource folder'), files:find('files','file count') };
+             theme:find('theme'), res:find('resources','resource folder'),
+             files:find('files','file count') };
   return rows.slice(1).map(r=>({
     date:  (r[ix.date]||'').trim(),
     type:  (r[ix.type]||'').trim(),
     who:   (r[ix.who]||'').trim(),
     topic: (r[ix.topic]||'').trim(),
     theme: (r[ix.theme]||'').trim(),
-    blurb: (r[ix.blurb]||'').trim(),
     res:   (r[ix.res]||'').trim(),
     files: (r[ix.files]||'').trim()
   })).filter(s=>s.date);
 }
 
-let ALL=[], state={q:'',themes:new Set(),years:new Set(),types:new Set(),onlyRes:false};
+let DATA=[];
+let activeThemes=new Set(), activeYears=new Set(), activeVenues=new Set();
+let onlyResources=false;
+let sort={key:'date',dir:1};        // oldest first, as the old site did
 
-const el = id => document.getElementById(id);
-const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const yearOf = d => (d||'').slice(0,4);
+const el=id=>document.getElementById(id);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const yearOf=d=>(d||'').slice(0,4);
 
-function makeChips(container, values, key){
-  container.innerHTML='';
-  const label=document.createElement('span');
-  label.className='glabel';
-  label.textContent={themes:'Theme',years:'Year',types:'Session'}[key];
-  container.appendChild(label);
-  values.forEach(v=>{
-    const b=document.createElement('button');
-    b.className='chip'; b.textContent=v; b.setAttribute('aria-pressed','false');
-    b.onclick=()=>{
-      const set=state[key];
-      set.has(v)?set.delete(v):set.add(v);
-      b.setAttribute('aria-pressed', set.has(v));
-      render();
-    };
-    container.appendChild(b);
-  });
-}
-
-function matches(s){
-  if(state.q){
-    const q=state.q.toLowerCase();
-    if(!(s.topic.toLowerCase().includes(q) || s.who.toLowerCase().includes(q)
-       || s.theme.toLowerCase().includes(q))) return false;
-  }
-  if(state.themes.size && !state.themes.has(s.theme)) return false;
-  if(state.years.size  && !state.years.has(yearOf(s.date))) return false;
-  if(state.types.size  && !state.types.has(s.type)) return false;
-  if(state.onlyRes && !s.res) return false;
-  return true;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Anything that is not a real YYYY-MM-DD is shown exactly as typed rather than
+   reformatted. A date entered oddly in the sheet should look wrong on the page -
+   that is the signal to go and fix it - not quietly become something misleading. */
+function niceDate(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');
+  if(!m) return iso||'';
+  const mon=MONTHS[+m[2]-1];
+  if(!mon) return iso;
+  return `${+m[3]} ${mon} ${m[1]}`;
 }
 
 function render(){
-  const shown=ALL.filter(matches);
-  const withRes=shown.filter(s=>s.res).length;
-  el('count').textContent =
-    `${shown.length} session${shown.length===1?'':'s'}` +
-    (shown.length!==ALL.length ? ` of ${ALL.length}` : '') +
-    ` · ${withRes} with materials`;
+  const q=el('search').value.toLowerCase().trim();
+  let rows=DATA.filter(s=>{
+    if(q && !s.topic.toLowerCase().includes(q) && !s.who.toLowerCase().includes(q)
+         && !s.theme.toLowerCase().includes(q)) return false;
+    if(activeThemes.size && !activeThemes.has(s.theme)) return false;
+    if(activeYears.size  && !activeYears.has(yearOf(s.date))) return false;
+    if(activeVenues.size && !activeVenues.has(s.type)) return false;
+    if(onlyResources && !s.res) return false;
+    return true;
+  });
 
-  if(!shown.length){
-    el('list').innerHTML='<li class="empty">No sessions match those filters.</li>';
-    return;
+  const k=sort.key, dir=sort.dir;
+  rows.sort((a,b)=>{
+    const av = k==='res' ? (a.res?1:0) : (a[k]||'').toLowerCase();
+    const bv = k==='res' ? (b.res?1:0) : (b[k]||'').toLowerCase();
+    if(av<bv) return -dir;
+    if(av>bv) return dir;
+    return a.date<b.date ? -1 : 1;
+  });
+
+  const withRes=rows.filter(s=>s.res).length;
+  el('results-bar').textContent =
+    (rows.length===DATA.length ? `${DATA.length} sessions` : `${rows.length} of ${DATA.length} sessions`)
+    + ` · ${withRes} with resources`;
+
+  document.querySelectorAll('th').forEach(th=>{
+    const on = th.dataset.key===sort.key;
+    th.classList.toggle('sorted', on);
+    th.querySelector('.arr').textContent = on ? (dir===1?'↑':'↓') : '↕';
+  });
+
+  if(!rows.length){
+    el('tbody').innerHTML=''; el('table').style.display='none';
+    el('no-results').style.display=''; return;
   }
-  el('list').innerHTML = shown.map(s=>{
-    const [y,m,d]=s.date.split('-');
-    const nice=`${d}/${m}`;
-    const res = s.res
-      ? `<a class="res" href="${esc(s.res)}" target="_blank" rel="noopener">Materials${s.files?` (${esc(s.files)})`:''}</a>`
-      : `<span class="nores">—</span>`;
-    return `<li class="session">
-      <span class="date">${nice}<span class="yr">${y}</span></span>
-      <div>
-        <div class="topic">${esc(s.topic)||'<em>Untitled</em>'}</div>
-        <div class="meta">
-          <span class="type">${esc(s.type)}</span>
-          ${s.who?` · ${esc(s.who)}`:''}
-          ${s.theme?` · <span class="tag">${esc(s.theme)}</span>`:''}
-        </div>
-        ${s.blurb?`<div class="blurb">${esc(s.blurb)}</div>`:''}
-      </div>
-      ${res}
-    </li>`;
+  el('no-results').style.display='none';
+  el('table').style.display='';
+
+  el('tbody').innerHTML=rows.map(s=>{
+    const [bg,fg]=themeColour(s.theme||'');
+    const n=parseInt(s.files,10);
+    const label=Number.isFinite(n)&&n>0 ? `📁 ${n} file${n===1?'':'s'}` : '📁 Open';
+    const resCell = s.res
+      ? `<a class="res-link" href="${esc(s.res)}" target="_blank" rel="noopener" title="Open the folder in Drive">${label}</a>`
+      : `<span class="no-res">—</span>`;
+    return `<tr>
+      <td class="col-date">${esc(niceDate(s.date))}</td>
+      <td class="col-venue">${esc(s.type)}</td>
+      <td class="col-presenter">${esc(s.who)}</td>
+      <td class="col-topic">${esc(s.topic)}</td>
+      <td class="col-theme">${s.theme
+          ? `<span class="theme-tag" style="background:${bg};color:${fg}">${esc(s.theme)}</span>`
+          : ''}</td>
+      <td class="col-resources">${resCell}</td>
+    </tr>`;
   }).join('');
 }
 
-function start(sessions){
-  ALL = sessions
-    .filter(s=>s.theme!==HIDE_THEME)
-    .sort((a,b)=> b.date.localeCompare(a.date));   // newest first
+function buildControls(){
+  // venue toggles, built from whatever is actually in the sheet
+  const icons={'Cafe':'☕','Café':'☕','Bistro':'🍽','Patisserie':'🥐','Pâtisserie':'🥐'};
+  const venues=[...new Set(DATA.map(s=>s.type).filter(Boolean))].sort();
+  const vt=el('venue-toggles');
+  venues.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='toggle';
+    b.textContent=(icons[v]?icons[v]+' ':'')+v;
+    b.onclick=()=>{
+      activeVenues.has(v)?activeVenues.delete(v):activeVenues.add(v);
+      b.classList.toggle('active',activeVenues.has(v));
+      render();
+    };
+    vt.appendChild(b);
+  });
 
-  makeChips(el('themes'), [...new Set(ALL.map(s=>s.theme).filter(Boolean))].sort(), 'themes');
-  makeChips(el('years'),  [...new Set(ALL.map(s=>yearOf(s.date)))].sort().reverse(), 'years');
-  makeChips(el('types'),  [...new Set(ALL.map(s=>s.type).filter(Boolean))].sort(), 'types');
+  const years=[...new Set(DATA.map(s=>yearOf(s.date)).filter(Boolean))].sort();
+  const yp=el('year-pills');
+  const yl=document.createElement('span');
+  yl.className='pills-label'; yl.textContent='Year:'; yp.appendChild(yl);
+  years.forEach(y=>{
+    const e=document.createElement('span');
+    e.className='year-pill'; e.textContent=y;
+    e.onclick=()=>{
+      activeYears.has(y)?activeYears.delete(y):activeYears.add(y);
+      e.classList.toggle('active',activeYears.has(y));
+      render();
+    };
+    yp.appendChild(e);
+  });
 
-  el('q').oninput = e => { state.q=e.target.value; render(); };
-  el('onlyRes').onclick = e => {
-    state.onlyRes=!state.onlyRes;
-    e.target.setAttribute('aria-pressed', state.onlyRes);
+  const themes=[...new Set(DATA.map(s=>s.theme).filter(Boolean))].sort();
+  const pl=el('pills');
+  const tl=document.createElement('span');
+  tl.className='pills-label'; tl.textContent='Theme:'; pl.appendChild(tl);
+  themes.forEach(t=>{
+    const [bg,fg]=themeColour(t);
+    const e=document.createElement('span');
+    e.className='pill'; e.textContent=t;
+    e.style.background=bg; e.style.color=fg; e.style.borderColor=fg+'33';
+    e.onclick=()=>{
+      const on=!activeThemes.has(t);
+      on?activeThemes.add(t):activeThemes.delete(t);
+      // selected pill inverts to its own colour, so the pill and the tag
+      // in the table are obviously the same thing
+      e.style.background = on?fg:bg;
+      e.style.color      = on?'#fff':fg;
+      e.style.borderColor= on?fg:fg+'33';
+      render();
+    };
+    pl.appendChild(e);
+  });
+
+  el('search').oninput=render;
+  el('btn-resources').onclick=()=>{
+    onlyResources=!onlyResources;
+    el('btn-resources').classList.toggle('active',onlyResources);
     render();
   };
-  el('updated').textContent = 'Updated ' + new Date().toLocaleDateString('en-GB',
-    {day:'numeric',month:'long',year:'numeric'});
-  render();
+  document.querySelectorAll('th').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.dataset.key;
+      if(sort.key===k) sort.dir=-sort.dir;
+      else sort={key:k,dir:1};
+      render();
+    };
+  });
 }
 
 fetch(CSV_URL)
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-  .then(t=>start(toObjects(parseCSV(t))))
+  .then(t=>{
+    DATA=toObjects(parseCSV(t)).filter(s=>s.theme!==HIDE_THEME);
+    el('loading').style.display='none';
+    buildControls();
+    el('footer').textContent='Last updated '+new Date().toLocaleDateString('en-GB',
+      {day:'numeric',month:'long',year:'numeric'});
+    render();
+  })
   .catch(e=>{
-    el('list').innerHTML='';
+    el('loading').style.display='none';
     el('err').innerHTML=`<div class="err"><strong>Could not load the sessions.</strong><br>
-      Check the published CSV link near the top of this file is correct and the
+      Check the published CSV link near the top of this file is correct and that the
       sheet is still published.<br><small>${esc(e.message)}</small></div>`;
   });
 </script>
