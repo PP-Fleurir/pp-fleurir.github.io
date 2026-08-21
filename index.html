@@ -12,6 +12,13 @@ header{background:white;border-bottom:1px solid #e0e0e0;padding:20px 32px 16px;
        position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
 header h1{font-size:1.4rem;font-weight:700;color:#1a1a2e;margin-bottom:3px;}
 header p{font-size:0.82rem;color:#888;}
+.head-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.rec-btn{display:inline-flex;flex-direction:column;align-items:flex-start;
+         padding:7px 15px;border:1.5px solid #2c3e50;border-radius:8px;
+         background:#2c3e50;color:white;text-decoration:none;font-size:0.85rem;
+         font-weight:600;white-space:nowrap;transition:opacity 0.15s;}
+.rec-btn:hover{opacity:0.85;}
+.rec-btn span{font-size:0.7rem;font-weight:400;opacity:0.75;margin-top:1px;}
 
 .controls{background:white;border-bottom:1px solid #e8e8e8;padding:14px 32px;
           display:flex;flex-direction:column;gap:12px;}
@@ -61,6 +68,14 @@ tr:hover td{background:#fafbfc;}
 
 .theme-tag{display:inline-block;padding:3px 9px;border-radius:10px;font-size:0.75rem;
            font-weight:600;white-space:nowrap;}
+
+.blurb{font-size:0.82rem;color:#7a8288;line-height:1.45;margin-top:3px;}
+.blurb.open{white-space:pre-wrap;}
+.blurb-toggle{background:none;border:none;padding:0 0 0 5px;font-family:inherit;
+              font-size:0.78rem;color:#1A5276;font-weight:600;cursor:pointer;}
+.blurb-toggle:hover{text-decoration:underline;}
+.rec-hint{text-decoration:none;font-size:0.85rem;margin-left:2px;}
+.rec-hint:hover{opacity:0.6;}
 .res-link{text-decoration:none;font-size:0.8rem;font-weight:600;color:#1A5276;
           white-space:nowrap;}
 a.res-link:hover{text-decoration:underline;}
@@ -82,8 +97,16 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 <body>
 
 <header>
-  <h1>🌸 Fleurir Session Resources</h1>
-  <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or presenter</p>
+  <div class="head-row">
+    <div>
+      <h1>🌸 Fleurir Session Resources</h1>
+      <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or presenter</p>
+    </div>
+    <a class="rec-btn" id="rec-btn" href="#" target="_blank" rel="noopener">
+      🎥 Recent recordings
+      <span>kept for about a month</span>
+    </a>
+  </div>
 </header>
 
 <div class="controls">
@@ -127,6 +150,15 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mY
 
 // Sessions with this theme are holiday markers, not sessions, so they are hidden.
 const HIDE_THEME = 'No session (break)';
+
+// Where the current recordings live. Videos are kept for roughly a month and
+// then deleted, so the page never stores a link to an individual video - only
+// to this folder. Set to '' to remove the recordings link entirely.
+const RECORDINGS_URL = 'https://drive.google.com/drive/folders/1OE1qdsYiM_VeVYKelzVWITkQK8jTRVG7';
+
+// How long a recording usually stays available. Used only to decide which
+// rows show the camera hint, so if the retention period changes, change this.
+const RECORDING_WINDOW_DAYS = 35;
 
 // Theme colours: pale background, dark text from the same family.
 // Themes carried over from the previous site keep their original colours so
@@ -187,7 +219,8 @@ function toObjects(rows){
   const find=(...names)=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
   const ix={ date:find('date'), type:find('type','café / bistro','cafe / bistro'),
              who:find('facilitator','presenter'), topic:find('topic'),
-             theme:find('theme'), res:find('resources','resource folder'),
+             theme:find('theme'), blurb:find('blurb','description'),
+             res:find('resources','resource folder'),
              files:find('files','file count') };
   return rows.slice(1).map(r=>({
     date:  (r[ix.date]||'').trim(),
@@ -195,6 +228,7 @@ function toObjects(rows){
     who:   (r[ix.who]||'').trim(),
     topic: (r[ix.topic]||'').trim(),
     theme: (r[ix.theme]||'').trim(),
+    blurb: (r[ix.blurb]||'').trim(),
     res:   (r[ix.res]||'').trim(),
     files: (r[ix.files]||'').trim()
   })).filter(s=>s.date);
@@ -203,7 +237,8 @@ function toObjects(rows){
 let DATA=[];
 let activeThemes=new Set(), activeYears=new Set(), activeVenues=new Set();
 let onlyResources=false;
-let sort={key:'date',dir:1};        // oldest first, as the old site did
+let sort={key:'date',dir:-1};       // most recent session first
+let expanded=new Set();             // which blurbs are open, by row key
 
 const el=id=>document.getElementById(id);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -219,6 +254,36 @@ function niceDate(iso){
   const mon=MONTHS[+m[2]-1];
   if(!mon) return iso;
   return `${+m[3]} ${mon} ${m[1]}`;
+}
+
+/* The blurb sits under the topic. Long ones are collapsed to a single line
+   with a toggle; short ones are just shown, since a "more" link that reveals
+   four extra words is more annoying than useful. */
+const BLURB_INLINE_LIMIT = 95;
+
+function blurbBlock(s){
+  const b=(s.blurb||'').replace(/\s+/g,' ').trim();
+  if(!b) return '';
+  const key=s.date+'|'+s.type;
+  if(b.length<=BLURB_INLINE_LIMIT) return `<div class="blurb">${esc(b)}</div>`;
+  const open=expanded.has(key);
+  const shown=open ? b : b.slice(0,BLURB_INLINE_LIMIT).replace(/\s+\S*$/,'')+'…';
+  return `<div class="blurb${open?' open':''}">${esc(shown)}`
+       + `<button class="blurb-toggle" data-k="${esc(key)}" aria-expanded="${open}">`
+       + `${open?'less':'more'}</button></div>`;
+}
+
+/* Recordings are kept for about a month and then deleted, so rather than
+   store a per-session video link that would rot, sessions recent enough to
+   still have one point at the folder. It expires on its own. */
+function recordingHint(iso){
+  if(!RECORDINGS_URL) return '';
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');
+  if(!m) return '';
+  const days=(Date.now()-Date.UTC(+m[1],+m[2]-1,+m[3]))/86400000;
+  if(days<0 || days>RECORDING_WINDOW_DAYS) return '';
+  return ` <a class="rec-hint" href="${RECORDINGS_URL}" target="_blank" rel="noopener"`
+       + ` title="Recent sessions are usually recorded. Recordings are kept for about a month.">🎥</a>`;
 }
 
 function render(){
@@ -268,16 +333,24 @@ function render(){
       ? `<a class="res-link" href="${esc(s.res)}" target="_blank" rel="noopener" title="Open the folder in Drive">${label}</a>`
       : `<span class="no-res">—</span>`;
     return `<tr>
-      <td class="col-date">${esc(niceDate(s.date))}</td>
+      <td class="col-date">${esc(niceDate(s.date))}${recordingHint(s.date)}</td>
       <td class="col-venue">${esc(s.type)}</td>
       <td class="col-presenter">${esc(s.who)}</td>
-      <td class="col-topic">${esc(s.topic)}</td>
+      <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
       <td class="col-theme">${s.theme
           ? `<span class="theme-tag" style="background:${bg};color:${fg}">${esc(s.theme)}</span>`
           : ''}</td>
       <td class="col-resources">${resCell}</td>
     </tr>`;
   }).join('');
+
+  el('tbody').querySelectorAll('.blurb-toggle').forEach(btn=>{
+    btn.onclick=()=>{
+      const k=btn.dataset.k;
+      expanded.has(k)?expanded.delete(k):expanded.add(k);
+      render();
+    };
+  });
 }
 
 function buildControls(){
@@ -333,6 +406,10 @@ function buildControls(){
     };
     pl.appendChild(e);
   });
+
+  const rb=el('rec-btn');
+  if(RECORDINGS_URL) rb.href=RECORDINGS_URL;
+  else rb.style.display='none';
 
   el('search').oninput=render;
   el('btn-resources').onclick=()=>{
