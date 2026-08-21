@@ -62,7 +62,9 @@ tr:hover td{background:#fafbfc;}
 
 .col-date{width:100px;color:#666;font-size:0.82rem;white-space:nowrap;}
 .col-venue{width:90px;font-size:0.78rem;color:#888;white-space:nowrap;}
-.col-presenter{width:160px;color:#444;}
+.col-facilitator{width:160px;color:#444;}
+.host{display:block;font-size:0.74rem;color:#9aa2a6;margin-top:2px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .col-theme{width:200px;}
 .col-resources{width:110px;text-align:center;}
 
@@ -91,7 +93,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   header{padding:14px 16px;}
   th,td{padding:8px 6px;}
 
-  /* Theme and session type go, presenter stays. The theme is already a
+  /* Theme and session type go, facilitator stays. The theme is already a
      filter at the top of the page, and the venue is implied by the time
      people turn up - but who ran a session is the thing you scan for. */
   .col-theme,.col-venue{display:none;}
@@ -102,8 +104,9 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
      line's width. Rows are usually two lines tall anyway once a blurb is
      showing, so this costs nothing and gives the topic 20px back. */
   .col-date{width:48px;font-size:0.76rem;white-space:normal;line-height:1.25;}
-  .col-presenter{width:88px;font-size:0.78rem;
-                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .col-facilitator{width:88px;font-size:0.78rem;
+                   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .host{font-size:0.7rem;}
   .col-resources{width:56px;}
   .res-count-word{display:none;}
   .blurb{font-size:0.78rem;}
@@ -116,7 +119,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   <div class="head-row">
     <div>
       <h1>🌸 Fleurir Session Resources</h1>
-      <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or presenter</p>
+      <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or facilitator</p>
     </div>
     <a class="rec-btn" id="rec-btn" href="#" target="_blank" rel="noopener">
       🎥 Recent recordings
@@ -127,7 +130,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 
 <div class="controls">
   <div class="row1">
-    <input type="text" id="search" placeholder="Search topic or presenter…">
+    <input type="text" id="search" placeholder="Search topic, facilitator or theme…">
     <div class="toggles" id="venue-toggles"></div>
     <div class="toggles">
       <button class="toggle" id="btn-resources">📁 Any resources</button>
@@ -144,7 +147,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
     <tr>
       <th class="col-date"      data-key="date">Date<span class="arr">↕</span></th>
       <th class="col-venue"     data-key="type">Session<span class="arr">↕</span></th>
-      <th class="col-presenter" data-key="who">Presenter<span class="arr">↕</span></th>
+      <th class="col-facilitator" data-key="who">Facilitator<span class="arr">↕</span></th>
       <th class="col-topic"     data-key="topic">Topic<span class="arr">↕</span></th>
       <th class="col-theme"     data-key="theme">Theme<span class="arr">↕</span></th>
       <th class="col-resources" data-key="res">Resources<span class="arr">↕</span></th>
@@ -235,7 +238,8 @@ function toObjects(rows){
   const find=(...names)=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
   const ix={ date:find('date'), type:find('type','café / bistro','cafe / bistro'),
              who:find('facilitator','presenter'), topic:find('topic'),
-             theme:find('theme'), blurb:find('blurb','description'),
+             theme:find('theme'), host:find('host'),
+             blurb:find('blurb','description'),
              res:find('resources','resource folder'),
              files:find('files','file count'),
              rec:find('recording','recordings') };
@@ -245,6 +249,7 @@ function toObjects(rows){
     who:   (r[ix.who]||'').trim(),
     topic: (r[ix.topic]||'').trim(),
     theme: (r[ix.theme]||'').trim(),
+    host:  (r[ix.host]||'').trim(),
     blurb: (r[ix.blurb]||'').trim(),
     res:   (r[ix.res]||'').trim(),
     files: (r[ix.files]||'').trim(),
@@ -305,7 +310,7 @@ function render(){
   const q=el('search').value.toLowerCase().trim();
   let rows=DATA.filter(s=>{
     if(q && !s.topic.toLowerCase().includes(q) && !s.who.toLowerCase().includes(q)
-         && !s.theme.toLowerCase().includes(q)) return false;
+         && !s.theme.toLowerCase().includes(q) && !s.host.toLowerCase().includes(q)) return false;
     if(activeThemes.size && !activeThemes.has(s.theme)) return false;
     if(activeYears.size  && !activeYears.has(yearOf(s.date))) return false;
     if(activeVenues.size && !activeVenues.has(s.type)) return false;
@@ -354,7 +359,8 @@ function render(){
     return `<tr>
       <td class="col-date">${esc(niceDate(s.date))}${recordingLink(s)}</td>
       <td class="col-venue">${esc(s.type)}</td>
-      <td class="col-presenter">${esc(s.who)}</td>
+      <td class="col-facilitator">${esc(s.who)}${
+          s.host?`<span class="host">(Host: ${esc(s.host)})</span>`:''}</td>
       <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
       <td class="col-theme">${s.theme
           ? `<span class="theme-tag" style="background:${bg};color:${fg}">${esc(s.theme)}</span>`
