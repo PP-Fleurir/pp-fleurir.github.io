@@ -151,14 +151,14 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mY
 // Sessions with this theme are holiday markers, not sessions, so they are hidden.
 const HIDE_THEME = 'No session (break)';
 
-// Where the current recordings live. Videos are kept for roughly a month and
-// then deleted, so the page never stores a link to an individual video - only
-// to this folder. Set to '' to remove the recordings link entirely.
+// Where the current recordings live, for the button in the header.
+// Set to '' to remove that button.
+//
+// Individual sessions get their recording link from the "Recording" column
+// in the sheet, which the daily script fills in and empties again as videos
+// come and go. The page shows a link only where that column has one, so a
+// session never claims to have a recording that has already been deleted.
 const RECORDINGS_URL = 'https://drive.google.com/drive/folders/1OE1qdsYiM_VeVYKelzVWITkQK8jTRVG7';
-
-// How long a recording usually stays available. Used only to decide which
-// rows show the camera hint, so if the retention period changes, change this.
-const RECORDING_WINDOW_DAYS = 35;
 
 // Theme colours: pale background, dark text from the same family.
 // Themes carried over from the previous site keep their original colours so
@@ -221,7 +221,8 @@ function toObjects(rows){
              who:find('facilitator','presenter'), topic:find('topic'),
              theme:find('theme'), blurb:find('blurb','description'),
              res:find('resources','resource folder'),
-             files:find('files','file count') };
+             files:find('files','file count'),
+             rec:find('recording','recordings') };
   return rows.slice(1).map(r=>({
     date:  (r[ix.date]||'').trim(),
     type:  (r[ix.type]||'').trim(),
@@ -230,7 +231,8 @@ function toObjects(rows){
     theme: (r[ix.theme]||'').trim(),
     blurb: (r[ix.blurb]||'').trim(),
     res:   (r[ix.res]||'').trim(),
-    files: (r[ix.files]||'').trim()
+    files: (r[ix.files]||'').trim(),
+    rec:   (r[ix.rec]||'').trim()
   })).filter(s=>s.date);
 }
 
@@ -273,17 +275,14 @@ function blurbBlock(s){
        + `${open?'less':'more'}</button></div>`;
 }
 
-/* Recordings are kept for about a month and then deleted, so rather than
-   store a per-session video link that would rot, sessions recent enough to
-   still have one point at the folder. It expires on its own. */
-function recordingHint(iso){
-  if(!RECORDINGS_URL) return '';
-  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');
-  if(!m) return '';
-  const days=(Date.now()-Date.UTC(+m[1],+m[2]-1,+m[3]))/86400000;
-  if(days<0 || days>RECORDING_WINDOW_DAYS) return '';
-  return ` <a class="rec-hint" href="${RECORDINGS_URL}" target="_blank" rel="noopener"`
-       + ` title="Recent sessions are usually recorded. Recordings are kept for about a month.">🎥</a>`;
+/* Only sessions that actually have a recording right now get a camera, and
+   the link goes to the folder rather than the video file. The daily script
+   empties this column when a video is deleted, so nothing here needs to
+   know about retention periods. */
+function recordingLink(s){
+  if(!s.rec) return '';
+  return ` <a class="rec-hint" href="${esc(s.rec)}" target="_blank" rel="noopener"`
+       + ` title="A recording of this session is available for a limited time">🎥</a>`;
 }
 
 function render(){
@@ -333,7 +332,7 @@ function render(){
       ? `<a class="res-link" href="${esc(s.res)}" target="_blank" rel="noopener" title="Open the folder in Drive">${label}</a>`
       : `<span class="no-res">—</span>`;
     return `<tr>
-      <td class="col-date">${esc(niceDate(s.date))}${recordingHint(s.date)}</td>
+      <td class="col-date">${esc(niceDate(s.date))}${recordingLink(s)}</td>
       <td class="col-venue">${esc(s.type)}</td>
       <td class="col-presenter">${esc(s.who)}</td>
       <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
