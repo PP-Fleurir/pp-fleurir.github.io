@@ -89,8 +89,24 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 @media(max-width:700px){
   .controls,.results-bar,footer{padding-left:16px;padding-right:16px;}
   header{padding:14px 16px;}
-  th,td{padding:8px 10px;}
-  .col-presenter,.col-venue{display:none;}
+  th,td{padding:8px 6px;}
+
+  /* Theme and session type go, presenter stays. The theme is already a
+     filter at the top of the page, and the venue is implied by the time
+     people turn up - but who ran a session is the thing you scan for. */
+  .col-theme,.col-venue{display:none;}
+
+  /* Everything that is not the topic gets as narrow as it can, so the
+     topic keeps the space it needs and wraps rather than being cut off. */
+  /* "23 Jul 2026" wraps to two lines here rather than reserving a full
+     line's width. Rows are usually two lines tall anyway once a blurb is
+     showing, so this costs nothing and gives the topic 20px back. */
+  .col-date{width:48px;font-size:0.76rem;white-space:normal;line-height:1.25;}
+  .col-presenter{width:88px;font-size:0.78rem;
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .col-resources{width:56px;}
+  .res-count-word{display:none;}
+  .blurb{font-size:0.78rem;}
 }
 </style>
 </head>
@@ -327,7 +343,11 @@ function render(){
   el('tbody').innerHTML=rows.map(s=>{
     const [bg,fg]=themeColour(s.theme||'');
     const n=parseInt(s.files,10);
-    const label=Number.isFinite(n)&&n>0 ? `📁 ${n} file${n===1?'':'s'}` : '📁 Open';
+    // "files" is in its own span so the narrow layout can drop the word
+    // and keep the number, rather than shrinking the whole label away.
+    const label=Number.isFinite(n)&&n>0
+      ? `📁 ${n}<span class="res-count-word"> file${n===1?'':'s'}</span>`
+      : '📁<span class="res-count-word"> Open</span>';
     const resCell = s.res
       ? `<a class="res-link" href="${esc(s.res)}" target="_blank" rel="noopener" title="Open the folder in Drive">${label}</a>`
       : `<span class="no-res">—</span>`;
