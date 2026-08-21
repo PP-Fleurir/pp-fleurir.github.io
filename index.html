@@ -63,7 +63,7 @@ tr:hover td{background:#fafbfc;}
 .col-date{width:100px;color:#666;font-size:0.82rem;white-space:nowrap;}
 .col-venue{width:90px;font-size:0.78rem;color:#888;white-space:nowrap;}
 .col-facilitator{width:160px;color:#444;}
-.host{display:block;font-size:0.74rem;color:#9aa2a6;margin-top:2px;
+.host{display:block;font-size:0.74rem;color:#6b747a;margin-top:2px;
       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .col-theme{width:200px;}
 .col-resources{width:110px;text-align:center;}
@@ -92,6 +92,10 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   .controls,.results-bar,footer{padding-left:16px;padding-right:16px;}
   header{padding:14px 16px;}
   th,td{padding:8px 6px;}
+  /* "Facilitator (host)" will not fit an 88px column on one line, and th is
+     nowrap by default, which would drag the column wider and undo the
+     narrow layout. Let headings wrap onto two lines here instead. */
+  th{white-space:normal;font-size:0.68rem;letter-spacing:0.2px;}
 
   /* Theme and session type go, facilitator stays. The theme is already a
      filter at the top of the page, and the venue is implied by the time
@@ -147,7 +151,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
     <tr>
       <th class="col-date"      data-key="date">Date<span class="arr">↕</span></th>
       <th class="col-venue"     data-key="type">Session<span class="arr">↕</span></th>
-      <th class="col-facilitator" data-key="who">Facilitator<span class="arr">↕</span></th>
+      <th class="col-facilitator" data-key="who">Facilitator (host)<span class="arr">↕</span></th>
       <th class="col-topic"     data-key="topic">Topic<span class="arr">↕</span></th>
       <th class="col-theme"     data-key="theme">Theme<span class="arr">↕</span></th>
       <th class="col-resources" data-key="res">Resources<span class="arr">↕</span></th>
@@ -360,7 +364,7 @@ function render(){
       <td class="col-date">${esc(niceDate(s.date))}${recordingLink(s)}</td>
       <td class="col-venue">${esc(s.type)}</td>
       <td class="col-facilitator">${esc(s.who)}${
-          s.host?`<span class="host">(Host: ${esc(s.host)})</span>`:''}</td>
+          s.host?`<span class="host">(${esc(s.host)})</span>`:''}</td>
       <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
       <td class="col-theme">${s.theme
           ? `<span class="theme-tag" style="background:${bg};color:${fg}">${esc(s.theme)}</span>`
