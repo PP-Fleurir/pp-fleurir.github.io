@@ -63,8 +63,8 @@ tr:hover td{background:#fafbfc;}
 .col-date{width:100px;color:#666;font-size:0.82rem;white-space:nowrap;}
 .col-venue{width:90px;font-size:0.78rem;color:#888;white-space:nowrap;}
 .col-facilitator{width:160px;color:#444;}
-.host{display:block;font-size:0.74rem;color:#6b747a;margin-top:2px;
-      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-host{width:120px;color:#6b747a;font-size:0.85rem;
+          overflow:hidden;text-overflow:ellipsis;}
 .col-resources{width:110px;text-align:center;}
 
 .blurb{font-size:0.82rem;color:#7a8288;line-height:1.45;margin-top:3px;}
@@ -88,14 +88,16 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   .controls,.results-bar,footer{padding-left:16px;padding-right:16px;}
   header{padding:14px 16px;}
   th,td{padding:8px 6px;}
-  /* "Facilitator (host)" will not fit an 88px column on one line, and th is
-     nowrap by default, which would drag the column wider and undo the
-     narrow layout. Let headings wrap onto two lines here instead. */
+  /* th is nowrap by default, so a heading longer than its column drags the
+     column wider and undoes the narrow layout. Let headings wrap and shrink
+     a little here instead. */
   th{white-space:normal;font-size:0.68rem;letter-spacing:0.2px;}
 
-  /* Session type goes, facilitator stays - who ran a session is the thing
-     people scan for. */
-  .col-venue{display:none;}
+  /* Session type and host go, facilitator stays. Four columns is already
+     the most a phone will take, and the facilitator is the name people
+     scan for. The host is still there on a wider screen, and still
+     searchable from the box at the top. */
+  .col-venue,.col-host{display:none;}
 
   /* Everything that is not the topic gets as narrow as it can, so the
      topic keeps the space it needs and wraps rather than being cut off. */
@@ -105,7 +107,6 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   .col-date{width:48px;font-size:0.76rem;white-space:normal;line-height:1.25;}
   .col-facilitator{width:88px;font-size:0.78rem;
                    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .host{font-size:0.7rem;}
   .col-resources{width:56px;}
   .res-count-word{display:none;}
   .blurb{font-size:0.78rem;}
@@ -145,7 +146,8 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
     <tr>
       <th class="col-date"      data-key="date">Date<span class="arr">↕</span></th>
       <th class="col-venue"     data-key="type">Session<span class="arr">↕</span></th>
-      <th class="col-facilitator" data-key="who">Facilitator (host)<span class="arr">↕</span></th>
+      <th class="col-host"        data-key="host">Host<span class="arr">↕</span></th>
+      <th class="col-facilitator" data-key="who">Facilitator<span class="arr">↕</span></th>
       <th class="col-topic"     data-key="topic">Topic<span class="arr">↕</span></th>
       <th class="col-resources" data-key="res">Resources<span class="arr">↕</span></th>
     </tr>
@@ -324,8 +326,8 @@ function render(){
     return `<tr>
       <td class="col-date">${esc(niceDate(s.date))}${recordingLink(s)}</td>
       <td class="col-venue">${esc(s.type)}</td>
-      <td class="col-facilitator">${esc(s.who)}${
-          s.host?`<span class="host">(${esc(s.host)})</span>`:''}</td>
+      <td class="col-host">${esc(s.host)}</td>
+      <td class="col-facilitator">${esc(s.who)}</td>
       <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
       <td class="col-resources">${resCell}</td>
     </tr>`;
