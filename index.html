@@ -1,13 +1,122 @@
+
+Stops when the app closes or this computer sleeps.
+Claude finished the response
+
+Ran a command
+Ran a command
+The page template does render it. So the problem is likely upstream — let me check what reaches the sheet.
+
+
+Ran a command
+Ran a command
+Historic connection sessions put the host's name in the Facilitator column, so this case is new — and it renders, but badly. Two fixes:
+
+
+Ran 3 commands, read a file
+Ran 3 commands, read a file
+A host with no facilitator now shows as (Paula) at normal size and colour, rather than as the faint small sub-line it was getting. Brackets kept, as you said. 49 tests pass.
+
+Worth being precise about what was wrong, because the old version wasn't quite not showing: it rendered, but styled as a secondary line beneath an empty first line — small, pale grey, with a top margin pushing it down. In a table row that reads as an empty cell with something stray under it. Easy to miss entirely at a glance.
+
+I also fixed sorting. Clicking the Facilitator column sorted on the facilitator field only, so every host-only session sorted as if it had no name and clumped together at one end. It now sorts on whichever name is displayed, so (Bella) files under B.
+
+Two things to check upstream, since no such rows exist in the sheet yet:
+
+The calendar script needs the word "Fleurir" in the event title. If connection sessions are advertised as just "Connection Session", they're skipped entirely and never reach the spreadsheet — no row, no host, nothing. That's the most likely reason you wouldn't see one appear.
+
+Historic connection sessions put the host's name in the Facilitator column — Carol, Juliet, Paula, Mireille and so on. So older rows won't show brackets. Nothing to fix unless you want consistency, but it does mean the bracketed style will only appear on sessions from here on.
+
+
+Index
+Code · HTML 
+Actually, now we don't have themes, let's put hosts in their own column. Before facilitator.
+
+
+Ran 5 commands
+Ran 5 commands
+Those three are the older suite still expecting five columns — stale expectations, not regressions:
+
+
+Ran 4 commands, read a file
+Ran 4 commands, read a file
+Host is now its own column at 120px, sitting between Session and Facilitator. 59 tests pass.
+
+The host-with-no-facilitator problem solves itself with this change — separate columns mean neither depends on the other, so the brackets, the solo style and the sort fallback I added last time all came back out. Host sorts on host, facilitator on facilitator.
+
+Two consequences worth knowing:
+
+Host is hidden on phones. Four columns is about the limit at 375px, and adding a fifth would have squeezed the topic below the 135px it currently gets. Facilitator stays visible since that's the name people scan for; host is still on any wider screen, and still findable via the search box, which covers it. Say if you'd rather sacrifice something else.
+
+The topic column gained about 80px on desktop. Theme freed 200px and host only takes 120 back.
+
+Sanna (and Jemima?) at 19 characters is the one value that will truncate in a 120px column — it'll show as much as fits with an ellipsis. Widening the column for one row isn't worth it, but tidying that cell in the sheet would be.
+
+
+Index
+Code · HTML 
+It would be nice to have a favicon. Can you make me one?
+
+
+Ran 2 commands, read a file
+
+Ran 2 commands, read a file
+At 16px it's a bit lost inside the white square. Let me compare that against a transparent version with bigger petals:
+
+
+Ran 9 commands, read 3 files · 2 notes
+
+
+Ran 9 commands, read 3 files · 2 notes
+A five-petal blossom in pink with a gold centre, picking up the 🌸 already in your page heading. Shown above at 16, 32 and 48px on both dark and light tab bars.
+
+You only need to upload index.html. The SVG is inlined as a data URI in the head, so the icon travels with the page — no extra files required. favicon.ico and apple-touch-icon.png are optional extras: drop them in the repo root for older browsers and for "add to home screen" on phones. Browsers also look for /favicon.ico on their own, so it works there without any link tag.
+
+Two decisions worth mentioning:
+
+No white background plate. My first attempt sat the flower on a white rounded square. Compared side by side, it was worse — on a light tab the square is invisible anyway, and on a dark tab it reads as a sticker. Dropping it let the petals be about 12% larger, which is what makes it legible at 16px.
+
+A bug the checks caught. The first inlined version was broken: the SVG's own " characters terminated the HTML attribute early, so the href was truncated to data:image/svg+xml,<svg xmlns=. Rewritten with single quotes inside the SVG, and I verified the href decodes back to valid SVG with all six circles intact.
+
+The generator is saved as make_favicon.py if you ever want to change the colours — the SVG and PNGs are drawn from one set of geometry so they can't drift apart.
+
+
+Index
+Code · HTML 
+
+Favicon
+ICO 
+
+Apple touch icon
+Image · PNG 
+
+Favicon
+Image · SVG 
+
+Write a message…
+
+
+
+
+Index · HTML
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fleurir Session Resources</title>
+ 
+<!-- Favicon.
+     The SVG is inlined so the page still has an icon even if index.html is
+     the only file uploaded. The .ico and apple-touch-icon are optional
+     extras for older browsers and for "add to home screen"; browsers also
+     find /favicon.ico on their own if it is sitting in the repo root. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16.00' cy='7.00' r='7.4' fill='%23E4649A'/><circle cx='24.56' cy='13.22' r='7.4' fill='%23E4649A'/><circle cx='21.29' cy='23.28' r='7.4' fill='%23E4649A'/><circle cx='10.71' cy='23.28' r='7.4' fill='%23E4649A'/><circle cx='7.44' cy='13.22' r='7.4' fill='%23E4649A'/><circle cx='16.0' cy='16.0' r='5.2' fill='%23F5B940'/></svg>" type="image/svg+xml">
+<link rel="alternate icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8f9fa;color:#2c3e50;font-size:14px;}
-
+ 
 header{background:white;border-bottom:1px solid #e0e0e0;padding:20px 32px 16px;
        position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
 header h1{font-size:1.4rem;font-weight:700;color:#1a1a2e;margin-bottom:3px;}
@@ -19,7 +128,7 @@ header p{font-size:0.82rem;color:#888;}
          font-weight:600;white-space:nowrap;transition:opacity 0.15s;}
 .rec-btn:hover{opacity:0.85;}
 .rec-btn span{font-size:0.7rem;font-weight:400;opacity:0.75;margin-top:1px;}
-
+ 
 .controls{background:white;border-bottom:1px solid #e8e8e8;padding:14px 32px;
           display:flex;flex-direction:column;gap:12px;}
 .row1{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
@@ -32,7 +141,7 @@ header p{font-size:0.82rem;color:#888;}
         font-family:inherit;color:#2c3e50;}
 .toggle:hover{border-color:#bbb;}
 .toggle.active{background:#2c3e50;color:white;border-color:#2c3e50;}
-
+ 
 .pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 .pills-label{font-size:0.75rem;font-weight:600;color:#aaa;text-transform:uppercase;
              letter-spacing:0.5px;margin-right:2px;}
@@ -45,10 +154,10 @@ header p{font-size:0.82rem;color:#888;}
            background:#f4f4f4;color:#555;border:1.5px solid #ddd;}
 .year-pill:hover{background:#e8e8e8;}
 .year-pill.active{background:#2c3e50;color:white;border-color:#2c3e50;}
-
+ 
 .results-bar{padding:10px 32px;font-size:0.8rem;color:#999;
              border-bottom:1px solid #eee;background:white;}
-
+ 
 table{width:100%;border-collapse:collapse;}
 th{padding:10px 16px;text-align:left;font-size:0.78rem;font-weight:600;color:#888;
    text-transform:uppercase;letter-spacing:0.4px;border-bottom:2px solid #e8e8e8;
@@ -59,14 +168,14 @@ th.sorted{color:#2c3e50;}
 th.sorted .arr{opacity:1;}
 td{padding:10px 16px;border-bottom:1px solid #f0f0f0;vertical-align:middle;line-height:1.4;}
 tr:hover td{background:#fafbfc;}
-
+ 
 .col-date{width:100px;color:#666;font-size:0.82rem;white-space:nowrap;}
 .col-venue{width:90px;font-size:0.78rem;color:#888;white-space:nowrap;}
 .col-facilitator{width:160px;color:#444;}
 .col-host{width:120px;color:#6b747a;font-size:0.85rem;
           overflow:hidden;text-overflow:ellipsis;}
 .col-resources{width:110px;text-align:center;}
-
+ 
 .blurb{font-size:0.82rem;color:#7a8288;line-height:1.45;margin-top:3px;}
 .blurb.open{white-space:pre-wrap;}
 .blurb-toggle{background:none;border:none;padding:0 0 0 5px;font-family:inherit;
@@ -78,12 +187,12 @@ tr:hover td{background:#fafbfc;}
           white-space:nowrap;}
 a.res-link:hover{text-decoration:underline;}
 .no-res{color:#ccc;font-size:0.78rem;}
-
+ 
 .no-results,.loading{padding:60px;text-align:center;color:#bbb;background:white;}
 .err{margin:24px 32px;background:#fdeceb;border:1px solid #f3c5c1;color:#8c2f26;
      padding:14px 16px;border-radius:8px;font-size:0.88rem;}
 footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
-
+ 
 @media(max-width:700px){
   .controls,.results-bar,footer{padding-left:16px;padding-right:16px;}
   header{padding:14px 16px;}
@@ -92,13 +201,13 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
      column wider and undoes the narrow layout. Let headings wrap and shrink
      a little here instead. */
   th{white-space:normal;font-size:0.68rem;letter-spacing:0.2px;}
-
+ 
   /* Session type and host go, facilitator stays. Four columns is already
      the most a phone will take, and the facilitator is the name people
      scan for. The host is still there on a wider screen, and still
      searchable from the box at the top. */
   .col-venue,.col-host{display:none;}
-
+ 
   /* Everything that is not the topic gets as narrow as it can, so the
      topic keeps the space it needs and wraps rather than being cut off. */
   /* "23 Jul 2026" wraps to two lines here rather than reserving a full
@@ -114,7 +223,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 </style>
 </head>
 <body>
-
+ 
 <header>
   <div class="head-row">
     <div>
@@ -127,7 +236,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
     </a>
   </div>
 </header>
-
+ 
 <div class="controls">
   <div class="row1">
     <input type="text" id="search" placeholder="Search topic, facilitator or host…">
@@ -138,7 +247,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   </div>
   <div class="pills" id="year-pills"></div>
 </div>
-
+ 
 <div class="results-bar" id="results-bar"></div>
 <div id="err"></div>
 <table id="table" style="display:none">
@@ -157,7 +266,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 <div id="no-results" class="no-results" style="display:none">No sessions match your filters.</div>
 <div id="loading" class="loading">Loading sessions…</div>
 <footer id="footer"></footer>
-
+ 
 <script>
 // ---------------------------------------------------------------------
 // Paste the published CSV link here.
@@ -165,12 +274,12 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 // > Comma-separated values (.csv), then copy the link it gives you.
 // ---------------------------------------------------------------------
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mYYJ0kcNA72FzNUKQoeaeU2UOafE7LGzXF2IC-f3kFtglYjyeMHY_JQq62DIZqygPe/pub?gid=1748292580&single=true&output=csv';
-
+ 
 // Themes are not shown on this page, but the column is still read for one
 // reason: rows carrying this theme are holiday markers rather than sessions,
 // and they are filtered out. Remove this and 34 empty "sessions" appear.
 const HIDE_THEME = 'No session (break)';
-
+ 
 // Where the current recordings live, for the button in the header.
 // Set to '' to remove that button.
 //
@@ -179,9 +288,9 @@ const HIDE_THEME = 'No session (break)';
 // come and go. The page shows a link only where that column has one, so a
 // session never claims to have a recording that has already been deleted.
 const RECORDINGS_URL = 'https://drive.google.com/drive/folders/1OE1qdsYiM_VeVYKelzVWITkQK8jTRVG7';
-
+ 
 // ---------------------------------------------------------------------
-
+ 
 /* A real CSV parser rather than splitting on commas. Session topics are
    full of commas, quotes and the occasional line break, all of which
    break the naive version. */
@@ -200,7 +309,7 @@ function parseCSV(text){
   if(field.length||row.length){ row.push(field); rows.push(row); }
   return rows.filter(r=>r.some(v=>v.trim()!==''));
 }
-
+ 
 /* Columns are found by heading, so reordering them in the sheet is fine. */
 function toObjects(rows){
   const head=rows[0].map(h=>h.trim().toLowerCase());
@@ -225,17 +334,17 @@ function toObjects(rows){
     rec:   (r[ix.rec]||'').trim()
   })).filter(s=>s.date);
 }
-
+ 
 let DATA=[];
 let activeYears=new Set(), activeVenues=new Set();
 let onlyResources=false;
 let sort={key:'date',dir:-1};       // most recent session first
 let expanded=new Set();             // which blurbs are open, by row key
-
+ 
 const el=id=>document.getElementById(id);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const yearOf=d=>(d||'').slice(0,4);
-
+ 
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* Anything that is not a real YYYY-MM-DD is shown exactly as typed rather than
    reformatted. A date entered oddly in the sheet should look wrong on the page -
@@ -247,12 +356,12 @@ function niceDate(iso){
   if(!mon) return iso;
   return `${+m[3]} ${mon} ${m[1]}`;
 }
-
+ 
 /* The blurb sits under the topic. Long ones are collapsed to a single line
    with a toggle; short ones are just shown, since a "more" link that reveals
    four extra words is more annoying than useful. */
 const BLURB_INLINE_LIMIT = 95;
-
+ 
 function blurbBlock(s){
   const b=(s.blurb||'').replace(/\s+/g,' ').trim();
   if(!b) return '';
@@ -264,7 +373,7 @@ function blurbBlock(s){
        + `<button class="blurb-toggle" data-k="${esc(key)}" aria-expanded="${open}">`
        + `${open?'less':'more'}</button></div>`;
 }
-
+ 
 /* Only sessions that actually have a recording right now get a camera, and
    the link goes to the folder rather than the video file. The daily script
    empties this column when a video is deleted, so nothing here needs to
@@ -274,7 +383,7 @@ function recordingLink(s){
   return ` <a class="rec-hint" href="${esc(s.rec)}" target="_blank" rel="noopener"`
        + ` title="A recording of this session is available for a limited time">🎥</a>`;
 }
-
+ 
 function render(){
   const q=el('search').value.toLowerCase().trim();
   let rows=DATA.filter(s=>{
@@ -285,7 +394,7 @@ function render(){
     if(onlyResources && !s.res) return false;
     return true;
   });
-
+ 
   const k=sort.key, dir=sort.dir;
   rows.sort((a,b)=>{
     const av = k==='res' ? (a.res?1:0) : (a[k]||'').toLowerCase();
@@ -294,25 +403,25 @@ function render(){
     if(av>bv) return dir;
     return a.date<b.date ? -1 : 1;
   });
-
+ 
   const withRes=rows.filter(s=>s.res).length;
   el('results-bar').textContent =
     (rows.length===DATA.length ? `${DATA.length} sessions` : `${rows.length} of ${DATA.length} sessions`)
     + ` · ${withRes} with resources`;
-
+ 
   document.querySelectorAll('th').forEach(th=>{
     const on = th.dataset.key===sort.key;
     th.classList.toggle('sorted', on);
     th.querySelector('.arr').textContent = on ? (dir===1?'↑':'↓') : '↕';
   });
-
+ 
   if(!rows.length){
     el('tbody').innerHTML=''; el('table').style.display='none';
     el('no-results').style.display=''; return;
   }
   el('no-results').style.display='none';
   el('table').style.display='';
-
+ 
   el('tbody').innerHTML=rows.map(s=>{
     const n=parseInt(s.files,10);
     // "files" is in its own span so the narrow layout can drop the word
@@ -332,7 +441,7 @@ function render(){
       <td class="col-resources">${resCell}</td>
     </tr>`;
   }).join('');
-
+ 
   el('tbody').querySelectorAll('.blurb-toggle').forEach(btn=>{
     btn.onclick=()=>{
       const k=btn.dataset.k;
@@ -341,7 +450,7 @@ function render(){
     };
   });
 }
-
+ 
 function buildControls(){
   // venue toggles, built from whatever is actually in the sheet
   const icons={'Cafe':'☕','Café':'☕','Bistro':'🍽','Patisserie':'🥐','Pâtisserie':'🥐'};
@@ -358,7 +467,7 @@ function buildControls(){
     };
     vt.appendChild(b);
   });
-
+ 
   const years=[...new Set(DATA.map(s=>yearOf(s.date)).filter(Boolean))].sort();
   const yp=el('year-pills');
   const yl=document.createElement('span');
@@ -373,11 +482,11 @@ function buildControls(){
     };
     yp.appendChild(e);
   });
-
+ 
   const rb=el('rec-btn');
   if(RECORDINGS_URL) rb.href=RECORDINGS_URL;
   else rb.style.display='none';
-
+ 
   el('search').oninput=render;
   el('btn-resources').onclick=()=>{
     onlyResources=!onlyResources;
@@ -393,7 +502,7 @@ function buildControls(){
     };
   });
 }
-
+ 
 fetch(CSV_URL)
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
   .then(t=>{
@@ -413,3 +522,4 @@ fetch(CSV_URL)
 </script>
 </body>
 </html>
+ 
