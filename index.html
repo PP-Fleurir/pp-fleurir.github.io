@@ -65,11 +65,7 @@ tr:hover td{background:#fafbfc;}
 .col-facilitator{width:160px;color:#444;}
 .host{display:block;font-size:0.74rem;color:#6b747a;margin-top:2px;
       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.col-theme{width:200px;}
 .col-resources{width:110px;text-align:center;}
-
-.theme-tag{display:inline-block;padding:3px 9px;border-radius:10px;font-size:0.75rem;
-           font-weight:600;white-space:nowrap;}
 
 .blurb{font-size:0.82rem;color:#7a8288;line-height:1.45;margin-top:3px;}
 .blurb.open{white-space:pre-wrap;}
@@ -97,10 +93,9 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
      narrow layout. Let headings wrap onto two lines here instead. */
   th{white-space:normal;font-size:0.68rem;letter-spacing:0.2px;}
 
-  /* Theme and session type go, facilitator stays. The theme is already a
-     filter at the top of the page, and the venue is implied by the time
-     people turn up - but who ran a session is the thing you scan for. */
-  .col-theme,.col-venue{display:none;}
+  /* Session type goes, facilitator stays - who ran a session is the thing
+     people scan for. */
+  .col-venue{display:none;}
 
   /* Everything that is not the topic gets as narrow as it can, so the
      topic keeps the space it needs and wraps rather than being cut off. */
@@ -123,7 +118,7 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
   <div class="head-row">
     <div>
       <h1>🌸 Fleurir Session Resources</h1>
-      <p>Cafe, Bistro &amp; Patisserie sessions — browse by theme, search by topic or facilitator</p>
+      <p>Cafe, Bistro &amp; Patisserie sessions — search by topic, facilitator or host</p>
     </div>
     <a class="rec-btn" id="rec-btn" href="#" target="_blank" rel="noopener">
       🎥 Recent recordings
@@ -134,14 +129,13 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 
 <div class="controls">
   <div class="row1">
-    <input type="text" id="search" placeholder="Search topic, facilitator or theme…">
+    <input type="text" id="search" placeholder="Search topic, facilitator or host…">
     <div class="toggles" id="venue-toggles"></div>
     <div class="toggles">
       <button class="toggle" id="btn-resources">📁 Any resources</button>
     </div>
   </div>
   <div class="pills" id="year-pills"></div>
-  <div class="pills" id="pills"></div>
 </div>
 
 <div class="results-bar" id="results-bar"></div>
@@ -153,7 +147,6 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
       <th class="col-venue"     data-key="type">Session<span class="arr">↕</span></th>
       <th class="col-facilitator" data-key="who">Facilitator (host)<span class="arr">↕</span></th>
       <th class="col-topic"     data-key="topic">Topic<span class="arr">↕</span></th>
-      <th class="col-theme"     data-key="theme">Theme<span class="arr">↕</span></th>
       <th class="col-resources" data-key="res">Resources<span class="arr">↕</span></th>
     </tr>
   </thead>
@@ -171,7 +164,9 @@ footer{padding:20px 32px;font-size:0.78rem;color:#bbb;text-align:right;}
 // ---------------------------------------------------------------------
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_6BBCQkRZx9mYYJ0kcNA72FzNUKQoeaeU2UOafE7LGzXF2IC-f3kFtglYjyeMHY_JQq62DIZqygPe/pub?gid=1748292580&single=true&output=csv';
 
-// Sessions with this theme are holiday markers, not sessions, so they are hidden.
+// Themes are not shown on this page, but the column is still read for one
+// reason: rows carrying this theme are holiday markers rather than sessions,
+// and they are filtered out. Remove this and 34 empty "sessions" appear.
 const HIDE_THEME = 'No session (break)';
 
 // Where the current recordings live, for the button in the header.
@@ -182,38 +177,6 @@ const HIDE_THEME = 'No session (break)';
 // come and go. The page shows a link only where that column has one, so a
 // session never claims to have a recording that has already been deleted.
 const RECORDINGS_URL = 'https://drive.google.com/drive/folders/1OE1qdsYiM_VeVYKelzVWITkQK8jTRVG7';
-
-// Theme colours: pale background, dark text from the same family.
-// Themes carried over from the previous site keep their original colours so
-// the page still looks familiar. Anything not listed falls back to a colour
-// picked from its name, so a new theme in the sheet always renders sensibly
-// rather than appearing blank.
-const THEME_COLOURS = {
-  'Coaching Practice':        ['#D6EAF8','#1A5276'],
-  'Research & Academia':      ['#D5F5E3','#156635'],
-  'Wellbeing & Self-Care':    ['#FDEBD0','#784212'],
-  'Mind & Body':              ['#E8DAEF','#6C3483'],
-  'Mental Health':            ['#FADBD8','#922B21'],
-  'Positive Psychology':      ['#FEF9E7','#7D6608'],
-  'Work & Leadership':        ['#D1F2EB','#0E6655'],
-  'Business & Career':        ['#EBF5FB','#21618C'],
-  'Creativity & Expression':  ['#F9EBEA','#A93226'],
-  'Community & Connection':   ['#F2F3F4','#424949'],
-  'Technology & AI':          ['#E8EAF6','#283593'],
-  'Society & Culture':        ['#F5E0F0','#7B2D6B'],
-  'Loss & Life Transitions':  ['#E4E9EC','#37505C'],
-  'Conferences & Events':     ['#EDF3D8','#5B6B21'],
-  'Other / Unclassified':     ['#F7F7F5','#63635B']
-};
-const FALLBACK_COLOURS = [
-  ['#D6EAF8','#1A5276'],['#D5F5E3','#1E8449'],['#FDEBD0','#784212'],
-  ['#E8DAEF','#6C3483'],['#FADBD8','#922B21'],['#D1F2EB','#0E6655']
-];
-function themeColour(t){
-  if(THEME_COLOURS[t]) return THEME_COLOURS[t];
-  let h=0; for(let i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))>>>0;
-  return FALLBACK_COLOURS[h%FALLBACK_COLOURS.length];
-}
 
 // ---------------------------------------------------------------------
 
@@ -262,7 +225,7 @@ function toObjects(rows){
 }
 
 let DATA=[];
-let activeThemes=new Set(), activeYears=new Set(), activeVenues=new Set();
+let activeYears=new Set(), activeVenues=new Set();
 let onlyResources=false;
 let sort={key:'date',dir:-1};       // most recent session first
 let expanded=new Set();             // which blurbs are open, by row key
@@ -314,8 +277,7 @@ function render(){
   const q=el('search').value.toLowerCase().trim();
   let rows=DATA.filter(s=>{
     if(q && !s.topic.toLowerCase().includes(q) && !s.who.toLowerCase().includes(q)
-         && !s.theme.toLowerCase().includes(q) && !s.host.toLowerCase().includes(q)) return false;
-    if(activeThemes.size && !activeThemes.has(s.theme)) return false;
+         && !s.host.toLowerCase().includes(q)) return false;
     if(activeYears.size  && !activeYears.has(yearOf(s.date))) return false;
     if(activeVenues.size && !activeVenues.has(s.type)) return false;
     if(onlyResources && !s.res) return false;
@@ -350,7 +312,6 @@ function render(){
   el('table').style.display='';
 
   el('tbody').innerHTML=rows.map(s=>{
-    const [bg,fg]=themeColour(s.theme||'');
     const n=parseInt(s.files,10);
     // "files" is in its own span so the narrow layout can drop the word
     // and keep the number, rather than shrinking the whole label away.
@@ -366,9 +327,6 @@ function render(){
       <td class="col-facilitator">${esc(s.who)}${
           s.host?`<span class="host">(${esc(s.host)})</span>`:''}</td>
       <td class="col-topic">${esc(s.topic)}${blurbBlock(s)}</td>
-      <td class="col-theme">${s.theme
-          ? `<span class="theme-tag" style="background:${bg};color:${fg}">${esc(s.theme)}</span>`
-          : ''}</td>
       <td class="col-resources">${resCell}</td>
     </tr>`;
   }).join('');
@@ -412,28 +370,6 @@ function buildControls(){
       render();
     };
     yp.appendChild(e);
-  });
-
-  const themes=[...new Set(DATA.map(s=>s.theme).filter(Boolean))].sort();
-  const pl=el('pills');
-  const tl=document.createElement('span');
-  tl.className='pills-label'; tl.textContent='Theme:'; pl.appendChild(tl);
-  themes.forEach(t=>{
-    const [bg,fg]=themeColour(t);
-    const e=document.createElement('span');
-    e.className='pill'; e.textContent=t;
-    e.style.background=bg; e.style.color=fg; e.style.borderColor=fg+'33';
-    e.onclick=()=>{
-      const on=!activeThemes.has(t);
-      on?activeThemes.add(t):activeThemes.delete(t);
-      // selected pill inverts to its own colour, so the pill and the tag
-      // in the table are obviously the same thing
-      e.style.background = on?fg:bg;
-      e.style.color      = on?'#fff':fg;
-      e.style.borderColor= on?fg:fg+'33';
-      render();
-    };
-    pl.appendChild(e);
   });
 
   const rb=el('rec-btn');
